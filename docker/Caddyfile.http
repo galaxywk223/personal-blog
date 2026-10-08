@@ -1,21 +1,19 @@
-{$SITE_DOMAIN:localhost} {
-  encode gzip zstd
-
+:80 {
+  encode zstd gzip
   handle_path /api/waline/* {
+    header Cache-Control "no-store"
     reverse_proxy waline:8360
   }
-
   handle /api/admin/* {
+    header Cache-Control "no-store"
     reverse_proxy admin:4322
   }
-
   handle /admin* {
+    header Cache-Control "no-store"
     reverse_proxy admin:4322
   }
-
   handle {
     root * /srv/dist
-    try_files {path} {path}/ /index.html
     file_server
   }
 }

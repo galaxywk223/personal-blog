@@ -5,3 +5,12 @@ dist
 .env
 README.md
 .admin-trash
+.env.*
+!.env.example
+.runtime
+.generated
+admin/node_modules
+import
+media
+*.dump
+*.backup

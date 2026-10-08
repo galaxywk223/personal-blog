@@ -1,13 +1,15 @@
 import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
-import { cp, rename, rm, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { cp, mkdir, rename, rm, stat } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const suffix = randomBytes(5).toString("hex");
-const stage = `.dist-stage-${suffix}`;
-const backup = `.dist-backup-${suffix}`;
+const outputRoot = process.env.BLOG_BUILD_ROOT ? resolve(process.env.BLOG_BUILD_ROOT) : root;
+const stage = join(outputRoot, `.dist-stage-${suffix}`);
+const backup = join(outputRoot, `.dist-backup-${suffix}`);
+const dist = join(outputRoot, "dist");
 
 function run(command, args) {
 	return new Promise((resolve, reject) => {
@@ -34,28 +36,29 @@ const pagefind = join(
 );
 let oldMoved = false;
 try {
-	await rm(join(root, stage), { recursive: true, force: true });
+	await mkdir(outputRoot, { recursive: true });
+	await rm(stage, { recursive: true, force: true });
 	await run(node, [join(root, "scripts", "content-sync.mjs")]);
 	await run(npm, ["run", "build:astro", "--", "--outDir", stage]);
 	await run(pagefind, ["--site", stage]);
-	await stat(join(root, stage, "index.html"));
+	await stat(join(stage, "index.html"));
 	try {
-		await rename(join(root, "dist"), join(root, backup));
+		await rename(dist, backup);
 		oldMoved = true;
 	} catch (error) {
 		if (error.code !== "ENOENT") throw error;
 	}
 	try {
-		await rm(join(root, "dist"), { recursive: true, force: true });
-		await cp(join(root, stage), join(root, "dist"), { recursive: true });
-		await rm(join(root, stage), { recursive: true, force: true });
+		await rm(dist, { recursive: true, force: true });
+		await cp(stage, dist, { recursive: true });
+		await rm(stage, { recursive: true, force: true });
 	} catch (error) {
-		await rm(join(root, "dist"), { recursive: true, force: true });
-		if (oldMoved) await cp(join(root, backup), join(root, "dist"), { recursive: true });
+		await rm(dist, { recursive: true, force: true });
+		if (oldMoved) await cp(backup, dist, { recursive: true });
 		throw error;
 	}
-	if (oldMoved) await rm(join(root, backup), { recursive: true, force: true });
+	if (oldMoved) await rm(backup, { recursive: true, force: true });
 } catch (error) {
-	await rm(join(root, stage), { recursive: true, force: true });
+	await rm(stage, { recursive: true, force: true });
 	throw error;
 }

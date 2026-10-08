@@ -11,6 +11,7 @@ RUN npm run build
 
 FROM node:24-alpine AS admin
 WORKDIR /app
+ENV NODE_OPTIONS=--max-old-space-size=1536
 COPY package.json package-lock.json* .npmrc ./
 RUN npm ci
 COPY . .
@@ -19,6 +20,6 @@ EXPOSE 4322
 CMD ["npm", "run", "admin"]
 
 FROM caddy:2-alpine
-COPY --from=build /app/dist /srv
+COPY --from=build /app/dist /srv/dist
 COPY docker/Caddyfile /etc/caddy/Caddyfile
 EXPOSE 80 443

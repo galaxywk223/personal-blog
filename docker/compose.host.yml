@@ -1,0 +1,86 @@
+name: personal-blog
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kailog
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PG_ROOT_PASSWORD:?PG_ROOT_PASSWORD is required}
+      BLOG_DB_PASSWORD: ${BLOG_DB_PASSWORD:?BLOG_DB_PASSWORD is required}
+      WALINE_DB_PASSWORD: ${WALINE_DB_PASSWORD:?WALINE_DB_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./init-blog-databases.sh:/docker-entrypoint-initdb.d/01-blog.sh:ro
+      - ./waline.pgsql:/bootstrap/waline.pgsql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kailog"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  admin:
+    image: ${ADMIN_IMAGE:-personal-blog-admin:local}
+    build:
+      context: ..
+      target: admin
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      BLOG_ROOT: /app
+      BLOG_BUILD_ROOT: /app/build-output
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=1536
+      ADMIN_PORT: 4322
+    command:
+      ["sh", "-c", "node scripts/admin-users.mjs && npm run build && exec node admin/server.mjs"]
+    volumes:
+      - site_dist:/app/build-output
+      - ../media:/app/public/images/uploads:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4322/favicon.svg').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+  waline:
+    image: lizheming/waline:latest
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      PG_DB: waline
+      PG_USER: waline
+      PG_PASSWORD: ${WALINE_DB_PASSWORD:?WALINE_DB_PASSWORD is required}
+      PG_HOST: postgres
+      PG_PORT: 5432
+      SITE_NAME: ${SITE_NAME:-KaiLog}
+      SITE_URL: ${PUBLIC_SITE_URL:?PUBLIC_SITE_URL is required}
+      SECURE_DOMAINS: ${SITE_DOMAIN:?SITE_DOMAIN is required}
+      JWT_TOKEN: ${WALINE_JWT_TOKEN:?WALINE_JWT_TOKEN is required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+  site:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${BLOG_HTTP_PORT:-18081}:80"
+    volumes:
+      - site_dist:/srv:ro
+      - ./Caddyfile.http:/etc/caddy/Caddyfile:ro
+    depends_on:
+      admin:
+        condition: service_healthy
+      waline:
+        condition: service_started
+volumes:
+  postgres_data:
+  site_dist:
