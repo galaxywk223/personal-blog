@@ -1,0 +1,58 @@
+---
+import { siteConfig } from "../config";
+import ConfigCarrier from "../components/ConfigCarrier.astro";
+import ThemeInitializer from "../components/ThemeInitializer.astro";
+import HomeFooter from "../components/home/HomeFooter.astro";
+import HomeNavbar from "../components/home/HomeNavbar.astro";
+import AbstractBackground from "../components/misc/AbstractBackground.astro";
+import "../styles/global.css";
+import "../styles/home.css";
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const {
+	title = siteConfig.title,
+	description = siteConfig.subtitle,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN" class="home-document">
+	<head>
+		<ThemeInitializer configHue={siteConfig.themeColor.hue} />
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap"
+			rel="stylesheet"
+		/>
+		<meta name="description" content={description} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:type" content="website" />
+		{siteConfig.favicon.map((f) => (
+			<link
+				rel="icon"
+				href={f.src}
+				sizes={f.sizes}
+				media={f.theme ? `(prefers-color-scheme: ${f.theme})` : undefined}
+			/>
+		))}
+		<title>{title}</title>
+	</head>
+	<body class="home-shell" data-overlayscrollbars-initialize>
+		<AbstractBackground />
+		<ConfigCarrier />
+		<HomeNavbar />
+		<main id="swup-container" class="transition-swup-fade">
+			<slot />
+		</main>
+		<div id="toc" hidden></div>
+		<HomeFooter />
+	</body>
+</html>

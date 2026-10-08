@@ -1,0 +1,31 @@
+---
+const configuredServerUrl = import.meta.env.PUBLIC_WALINE_SERVER_URL;
+const serverUrl = configuredServerUrl || (import.meta.env.PUBLIC_SITE_URL
+  ? `${import.meta.env.PUBLIC_SITE_URL}/api/waline`
+  : undefined);
+---
+
+<section class="comments" aria-labelledby="comments-title">
+  <h2 id="comments-title">评论</h2>
+  {serverUrl ? <div id="waline" data-server-url={serverUrl}></div> : <p class="muted">评论服务尚未配置。</p>}
+</section>
+
+{serverUrl && (
+  <script>
+    import { init } from '@waline/client';
+    import '@waline/client/style';
+
+    let instance: { destroy?: () => void } | null | undefined;
+    const mount = () => {
+      const element = document.querySelector('#waline');
+      const url = element?.getAttribute('data-server-url');
+      if (!(element instanceof HTMLElement) || !url) return;
+      instance?.destroy?.();
+      instance = init({ el: element, serverURL: url });
+    };
+
+    mount();
+    document.addEventListener('astro:page-load', mount);
+    window.swup?.hooks?.on('page:view', mount);
+  </script>
+)}

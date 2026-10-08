@@ -1,0 +1,33 @@
+---
+import { footerConfig, homeConfig, navBarConfig } from "../../config";
+import type { NavBarLink } from "../../types/config";
+import { LinkPresets } from "../../constants/link-presets";
+import { url } from "../../utils/url-utils";
+
+const links: NavBarLink[] = navBarConfig.links.map((item) => {
+	if (typeof item === "number") return LinkPresets[item];
+	return item;
+});
+
+const year = new Date().getFullYear();
+---
+
+<footer class="home-footer">
+	{homeConfig.quote && (
+		<blockquote class="home-footer-quote">"{homeConfig.quote}"</blockquote>
+	)}
+	<nav class="home-footer-nav" aria-label="页脚导航">
+		{links.map((link) => (
+			<a
+				href={link.external ? link.url : url(link.url)}
+				target={link.external ? "_blank" : undefined}
+				rel={link.external ? "noopener noreferrer" : undefined}
+			>
+				{link.name}
+			</a>
+		))}
+	</nav>
+	<div class="home-footer-bottom">
+		<small class="home-footer-copy">© {year} {footerConfig.copyrightName}</small>
+	</div>
+</footer>

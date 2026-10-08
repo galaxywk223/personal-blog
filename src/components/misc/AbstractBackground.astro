@@ -1,0 +1,266 @@
+---
+// AbstractBackground.astro — Full-page generative abstract background
+---
+
+<div class="abstract-bg-root" aria-hidden="true">
+	<!-- Atmospheric ambient glow meshes -->
+	<div class="abstract-bg-glow glow-top-right"></div>
+	<div class="abstract-bg-glow glow-bottom-left"></div>
+	<div class="abstract-bg-glow glow-center"></div>
+
+	<!-- Topographic flow curves & scattered mathematical vectors -->
+	<svg
+		class="abstract-bg-svg"
+		viewBox="0 0 1600 1000"
+		preserveAspectRatio="xMidYMid slice"
+		fill="none"
+		xmlns="http://www.w3.org/2000/svg"
+	>
+		<!-- Defs: Subtle paper grain noise filter -->
+		<defs>
+			<filter id="bg-grain" x="0%" y="0%" width="100%" height="100%">
+				<feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" stitchTiles="stitch" />
+				<feColorMatrix type="matrix" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.04 0" />
+			</filter>
+		</defs>
+
+		<!-- Subtle texture layer -->
+		<rect width="100%" height="100%" filter="url(#bg-grain)" opacity="0.6" />
+
+		<!-- ─── Flow field streamline bundle 1 (Top-left to Mid-right) ─── -->
+		<g class="abstract-streamlines" opacity="0.5">
+			<path
+				d="M -60 140 C 280 80, 520 380, 880 240 C 1240 100, 1460 320, 1680 180"
+				stroke="currentColor"
+				stroke-width="1.2"
+			/>
+			<path
+				d="M -60 170 C 260 120, 500 420, 860 270 C 1220 120, 1440 350, 1680 210"
+				stroke="currentColor"
+				stroke-width="0.8"
+				stroke-dasharray="6 8"
+				opacity="0.65"
+			/>
+			<path
+				d="M -60 210 C 240 160, 480 460, 840 310 C 1200 160, 1420 390, 1680 250"
+				stroke="currentColor"
+				stroke-width="0.75"
+				opacity="0.45"
+			/>
+		</g>
+
+		<!-- ─── Flow field streamline bundle 2 (Mid-left to Bottom-right) ─── -->
+		<g class="abstract-streamlines" opacity="0.45">
+			<path
+				d="M -80 540 C 320 620, 680 340, 1040 520 C 1360 680, 1540 440, 1720 560"
+				stroke="currentColor"
+				stroke-width="1.1"
+			/>
+			<path
+				d="M -80 575 C 300 655, 660 375, 1020 555 C 1340 715, 1520 475, 1720 595"
+				stroke="currentColor"
+				stroke-width="0.8"
+				stroke-dasharray="4 6"
+				opacity="0.6"
+			/>
+			<path
+				d="M -80 620 C 280 700, 640 420, 1000 600 C 1320 760, 1500 520, 1720 640"
+				stroke="currentColor"
+				stroke-width="0.75"
+				opacity="0.35"
+			/>
+		</g>
+
+		<!-- ─── Flow field streamline bundle 3 (Lower wave) ─── -->
+		<g class="abstract-streamlines" opacity="0.35">
+			<path
+				d="M -40 820 C 380 740, 740 920, 1120 780 C 1440 660, 1580 840, 1700 800"
+				stroke="currentColor"
+				stroke-width="0.9"
+			/>
+			<path
+				d="M -40 860 C 360 780, 720 960, 1100 820 C 1420 700, 1560 880, 1700 840"
+				stroke="currentColor"
+				stroke-width="0.65"
+				stroke-dasharray="3 5"
+				opacity="0.5"
+			/>
+		</g>
+
+		<!-- ─── Large orbital construct arcs ─── -->
+		<g class="abstract-constructs" opacity="0.4">
+			<circle cx="1320" cy="280" r="260" stroke="currentColor" stroke-width="0.7" stroke-dasharray="5 7" />
+			<circle cx="1320" cy="280" r="6" stroke="currentColor" stroke-width="0.8" />
+			<circle cx="280" cy="740" r="220" stroke="currentColor" stroke-width="0.7" stroke-dasharray="4 6" />
+			<circle cx="280" cy="740" r="5" stroke="currentColor" stroke-width="0.8" />
+			<!-- Tangent chord line -->
+			<line x1="200" y1="520" x2="420" y2="920" stroke="currentColor" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.5" />
+			<line x1="1120" y1="120" x2="1520" y2="440" stroke="currentColor" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.5" />
+		</g>
+
+		<!-- ─── Scattered dot matrices ─── -->
+		<g class="abstract-dot-matrix" opacity="0.35">
+			<!-- Cluster 1: Top center -->
+			<circle cx="720" cy="90" r="1.2" fill="currentColor" />
+			<circle cx="740" cy="90" r="1.2" fill="currentColor" />
+			<circle cx="760" cy="90" r="1.2" fill="currentColor" />
+			<circle cx="720" cy="110" r="1.2" fill="currentColor" />
+			<circle cx="740" cy="110" r="1.2" fill="currentColor" />
+			<circle cx="760" cy="110" r="1.2" fill="currentColor" />
+			<circle cx="720" cy="130" r="1.2" fill="currentColor" />
+			<circle cx="740" cy="130" r="1.2" fill="currentColor" />
+			<circle cx="760" cy="130" r="1.2" fill="currentColor" />
+
+			<!-- Cluster 2: Bottom right -->
+			<circle cx="1440" cy="820" r="1.2" fill="currentColor" />
+			<circle cx="1460" cy="820" r="1.2" fill="currentColor" />
+			<circle cx="1480" cy="820" r="1.2" fill="currentColor" />
+			<circle cx="1440" cy="840" r="1.2" fill="currentColor" />
+			<circle cx="1460" cy="840" r="1.2" fill="currentColor" />
+			<circle cx="1480" cy="840" r="1.2" fill="currentColor" />
+
+			<!-- Cluster 3: Mid left -->
+			<circle cx="120" cy="380" r="1.2" fill="currentColor" />
+			<circle cx="140" cy="380" r="1.2" fill="currentColor" />
+			<circle cx="120" cy="400" r="1.2" fill="currentColor" />
+			<circle cx="140" cy="400" r="1.2" fill="currentColor" />
+		</g>
+
+		<!-- ─── Scattered Coordinate Crosshairs & Math Glyphs ─── -->
+		<g class="abstract-annotations" opacity="0.55">
+			<!-- Point 1 -->
+			<g transform="translate(190, 180)">
+				<path d="M -6 0 H 6 M 0 -6 V 6" stroke="currentColor" stroke-width="0.8" />
+				<text x="12" y="4" font-size="8.5" font-family="monospace" fill="currentColor" opacity="0.8">sec·01 [31.2°N, 121.4°E]</text>
+			</g>
+
+			<!-- Point 2 -->
+			<g transform="translate(940, 160)">
+				<path d="M -5 0 H 5 M 0 -5 V 5" stroke="currentColor" stroke-width="0.8" />
+				<text x="10" y="4" font-size="8.5" font-family="monospace" fill="currentColor" opacity="0.75">∇·F = 0</text>
+				<rect x="-12" y="-12" width="24" height="24" stroke="currentColor" stroke-width="0.6" stroke-dasharray="2 3" opacity="0.5" />
+			</g>
+
+			<!-- Point 3 -->
+			<g transform="translate(1460, 220)">
+				<path d="M -6 0 H 6 M 0 -6 V 6" stroke="currentColor" stroke-width="0.8" />
+				<text x="12" y="4" font-size="8.5" font-family="monospace" fill="currentColor" opacity="0.8">λ ≈ 2.71828</text>
+			</g>
+
+			<!-- Point 4 -->
+			<g transform="translate(480, 480)">
+				<path d="M -5 0 H 5 M 0 -5 V 5" stroke="currentColor" stroke-width="0.8" />
+				<text x="10" y="4" font-size="8.5" font-family="serif" font-style="italic" fill="currentColor" opacity="0.7">∮ B·dl = μ₀I</text>
+			</g>
+
+			<!-- Point 5 -->
+			<g transform="translate(860, 680)">
+				<circle cx="0" cy="0" r="3" stroke="currentColor" stroke-width="0.8" />
+				<text x="10" y="4" font-size="8.5" font-family="monospace" fill="currentColor" opacity="0.8">node.7 [t → ∞]</text>
+			</g>
+
+			<!-- Point 6 -->
+			<g transform="translate(180, 890)">
+				<path d="M -6 0 H 6 M 0 -6 V 6" stroke="currentColor" stroke-width="0.8" />
+				<text x="12" y="4" font-size="8.5" font-family="monospace" fill="currentColor" opacity="0.75">∂²u/∂t² = c²∇²u</text>
+			</g>
+
+			<!-- Point 7 -->
+			<g transform="translate(1280, 720)">
+				<path d="M -5 0 H 5 M 0 -5 V 5" stroke="currentColor" stroke-width="0.8" />
+				<text x="10" y="4" font-size="8.5" font-family="serif" font-style="italic" fill="currentColor" opacity="0.7">f(x, y) ↦ ℝ</text>
+			</g>
+		</g>
+
+		<!-- ─── Scattered tiny geometric accents ─── -->
+		<g class="abstract-nodes" opacity="0.5">
+			<!-- Tiny square nodes on flow paths -->
+			<rect x="516" y="276" width="6" height="6" stroke="currentColor" stroke-width="0.8" fill="none" rx="1" />
+			<rect x="856" y="266" width="6" height="6" fill="currentColor" rx="1" />
+			<rect x="1036" y="516" width="6" height="6" stroke="currentColor" stroke-width="0.8" fill="none" rx="1" />
+			<rect x="1416" y="676" width="6" height="6" fill="currentColor" rx="1" />
+			<polygon points="676,680 682,670 688,680" stroke="currentColor" stroke-width="0.8" fill="none" />
+			<polygon points="1220,180 1226,170 1232,180" stroke="currentColor" stroke-width="0.8" fill="none" />
+		</g>
+	</svg>
+</div>
+
+<style>
+	.abstract-bg-root {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		height: 100vh;
+		pointer-events: none;
+		z-index: 0;
+		overflow: hidden;
+		user-select: none;
+		-webkit-user-select: none;
+	}
+
+	/* Ambient diffuse glow meshes */
+	.abstract-bg-glow {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(90px);
+		pointer-events: none;
+		opacity: 0.55;
+		transition: opacity 0.3s ease;
+	}
+
+	.glow-top-right {
+		top: -15vh;
+		right: -10vw;
+		width: 60vw;
+		height: 60vh;
+		background: radial-gradient(
+			circle,
+			color-mix(in oklch, var(--color-accent) 18%, transparent) 0%,
+			color-mix(in oklch, var(--color-accent) 6%, transparent) 55%,
+			transparent 75%
+		);
+	}
+
+	.glow-bottom-left {
+		bottom: -20vh;
+		left: -15vw;
+		width: 65vw;
+		height: 65vh;
+		background: radial-gradient(
+			circle,
+			color-mix(in oklch, var(--color-accent) 14%, transparent) 0%,
+			color-mix(in oklch, var(--color-accent) 4%, transparent) 60%,
+			transparent 80%
+		);
+	}
+
+	.glow-center {
+		top: 35vh;
+		left: 30vw;
+		width: 45vw;
+		height: 45vh;
+		background: radial-gradient(
+			circle,
+			color-mix(in oklch, var(--color-accent) 8%, transparent) 0%,
+			transparent 70%
+		);
+	}
+
+	/* SVG Vector Canvas */
+	.abstract-bg-svg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		color: var(--color-accent);
+		opacity: 0.42;
+	}
+
+	:root.dark .abstract-bg-glow {
+		opacity: 0.4;
+	}
+
+	:root.dark .abstract-bg-svg {
+		opacity: 0.32;
+	}
+</style>

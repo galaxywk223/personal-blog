@@ -1,0 +1,129 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getPostUrlBySlug } from "../../utils/url-utils";
+import { projectStatusLabel } from "../../constants/project-status";
+
+interface Props {
+	posts: CollectionEntry<"posts">[];
+	projects: CollectionEntry<"projects">[];
+	logs: CollectionEntry<"logs">[];
+}
+
+const { posts, projects, logs } = Astro.props;
+const recentPosts = posts.slice(0, 3);
+const recentLogs = logs.slice(0, 5);
+const activeProjects = projects
+	.filter((p) => p.data.status === "in-progress" || p.data.status === "active" || p.data.status === "completed")
+	.slice(0, 2);
+const fallbackProjects = projects.slice(0, 2);
+const displayProjects = activeProjects.length > 0 ? activeProjects : fallbackProjects;
+---
+
+<div class="home-recent">
+	<!-- Posts -->
+	<section class="home-recent-block" aria-labelledby="recent-posts-heading">
+		<div class="home-recent-header">
+			<h2 id="recent-posts-heading" class="home-recent-title">文章</h2>
+			<div class="home-header-rule" aria-hidden="true"></div>
+			<a href="/blog/" class="home-recent-more">全部 →</a>
+		</div>
+		{recentPosts.length > 0 ? (
+			<ul class="home-post-list" role="list">
+				{recentPosts.map((post) => (
+					<li class="home-post-row">
+						<a href={getPostUrlBySlug(post.id)} class="home-post-link">
+							{post.data.title}
+						</a>
+						<time
+							class="home-post-date"
+							datetime={post.data.published.toISOString().slice(0, 10)}
+						>
+							{post.data.published.toLocaleDateString("zh-CN", {
+								year: "numeric",
+								month: "2-digit",
+								day: "2-digit",
+							}).replace(/\//g, "-")}
+						</time>
+					</li>
+				))}
+			</ul>
+		) : (
+			<div class="home-recent-empty-wrap">
+				<svg
+					class="home-empty-doc-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.25"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+					<polyline points="14 2 14 8 20 8"></polyline>
+					<line x1="16" y1="13" x2="8" y2="13"></line>
+					<line x1="16" y1="17" x2="8" y2="17"></line>
+					<line x1="10" y1="9" x2="8" y2="9"></line>
+				</svg>
+				<p class="home-recent-empty">还没有公开文章。</p>
+			</div>
+		)}
+	</section>
+
+	<!-- Logs -->
+	<section class="home-recent-block" aria-labelledby="recent-logs-heading">
+		<div class="home-recent-header">
+			<h2 id="recent-logs-heading" class="home-recent-title">日志</h2>
+			<div class="home-header-rule" aria-hidden="true"></div>
+			<a href="/archive/" class="home-recent-more">全部 →</a>
+		</div>
+		{recentLogs.length > 0 ? (
+			<ul class="home-log-list" role="list">
+				{recentLogs.map((log) => (
+					<li class="home-log-row">
+						<div class="home-log-main">
+							<span class="home-log-marker" aria-hidden="true"></span>
+							<span class="home-log-label">{log.data.title}</span>
+						</div>
+						<time class="home-log-date" datetime={log.data.date}>{log.data.date}</time>
+					</li>
+				))}
+			</ul>
+		) : (
+			<p class="home-recent-empty">暂无日志。</p>
+		)}
+	</section>
+
+	<!-- Projects -->
+	<section class="home-recent-block" aria-labelledby="recent-projects-heading">
+		<div class="home-recent-header">
+			<h2 id="recent-projects-heading" class="home-recent-title">项目</h2>
+			<div class="home-header-rule" aria-hidden="true"></div>
+			<a href="/projects/" class="home-recent-more">全部 →</a>
+		</div>
+		{displayProjects.length > 0 ? (
+			<ul class="home-project-list" role="list">
+				{displayProjects.map((project) => (
+					<li class="home-recent-project-item">
+						<div class="home-recent-project-headline">
+							<a href={`/projects/${project.id}/`} class="home-recent-project-title">
+								{project.data.title}
+							</a>
+							<span
+								class="home-status-badge"
+								data-status={project.data.status ?? "planned"}
+							>
+								{projectStatusLabel(project.data.status)}
+							</span>
+						</div>
+						{project.data.description && (
+							<p class="home-recent-project-desc">{project.data.description}</p>
+						)}
+					</li>
+				))}
+			</ul>
+		) : (
+			<p class="home-recent-empty">暂无项目。</p>
+		)}
+	</section>
+</div>

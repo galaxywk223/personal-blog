@@ -1,0 +1,84 @@
+/*
+ * Design system semantic tokens
+ *
+ * Maps raw OKLCH variables (from variables.css, driven by --hue) to
+ * named roles used throughout the redesigned components.
+ * Keep variables.css for backward compat with expressive-code overrides.
+ *
+ * Radius values are theme-independent and declared once here.
+ */
+
+:root {
+	--font-serif: "Noto Serif SC", "Source Han Serif SC", "Source Han Serif CN", "Songti SC", "SimSun", "STSong", "Playfair Display", Georgia, serif;
+	--font-sans: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", system-ui, sans-serif;
+	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+	--radius-sm: 6px;
+	--radius-md: 10px;
+	--radius-lg: 1rem;
+
+	/* Surface hierarchy */
+	--color-surface-base: var(--page-bg);
+	--color-surface-raised: var(--card-bg);
+	--color-surface-overlay: var(--float-panel-bg);
+
+	/* Borders */
+	--color-border: var(--line-color);
+	--color-border-muted: var(--line-divider);
+
+	/* Text roles */
+	--color-text: #2f3733;
+	--color-text-muted: #6f7874;
+	--color-text-heading: #141a17;
+
+	/* Accent — forest / pine green matching the design */
+	--color-accent: oklch(0.43 0.1 var(--hue));
+	--color-accent-hover: oklch(0.36 0.11 var(--hue));
+	--color-accent-muted: oklch(0.95 0.025 var(--hue));
+	--color-accent-text: #ffffff;
+
+	/* Semantic status colors — used for project status badges, alerts */
+	--color-success: #2b6653;
+	--color-warning: oklch(0.55 0.14 65);
+	--color-danger: oklch(0.55 0.18 25);
+	--color-info: oklch(0.5 0.12 250);
+
+	/* Semantic status surface tints */
+	--color-success-tint: #e2efe9;
+	--color-warning-tint: oklch(0.96 0.04 65);
+	--color-danger-tint: oklch(0.95 0.04 25);
+	--color-info-tint: oklch(0.95 0.03 250);
+}
+
+:root.dark {
+	--color-surface-base: oklch(0.16 0.012 var(--hue));
+	--color-surface-raised: oklch(0.2 0.015 var(--hue));
+	--color-surface-overlay: oklch(0.22 0.015 var(--hue));
+
+	/* Borders */
+	--color-border: rgba(255, 255, 255, 0.12);
+	--color-border-muted: rgba(255, 255, 255, 0.08);
+
+	/* Text roles */
+	--color-text: #d6ded9;
+	--color-text-muted: #919d96;
+	--color-text-heading: #f2f7f4;
+
+	/* Accent text on accent bg */
+	--color-accent: oklch(0.74 0.12 var(--hue));
+	--color-accent-hover: oklch(0.8 0.13 var(--hue));
+	--color-accent-muted: oklch(0.25 0.035 var(--hue));
+	--color-accent-text: oklch(0.12 0.01 var(--hue));
+
+	/* Dark status colors */
+	--color-success: #67c2a1;
+	--color-warning: oklch(0.77 0.15 65);
+	--color-danger: oklch(0.68 0.18 25);
+	--color-info: oklch(0.74 0.12 250);
+
+	/* Dark tints */
+	--color-success-tint: rgba(43, 102, 83, 0.28);
+	--color-warning-tint: oklch(0.22 0.04 65);
+	--color-danger-tint: oklch(0.22 0.04 25);
+	--color-info-tint: oklch(0.22 0.03 250);
+}

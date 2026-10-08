@@ -1,0 +1,23 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+---
+
+<MainGridLayout title="搜索" eyebrow="探索内容" description="查找文章、项目与研究笔记。">
+  <section class="home-page-section">
+      <div id="search" class="mt-6"></div>
+      {!import.meta.env.PROD && <p class="mt-4 text-black/50 dark:text-white/50">开发模式请使用顶部搜索；生产构建后启用完整搜索。</p>}
+  </section>
+</MainGridLayout>
+
+{import.meta.env.PROD && <link rel="stylesheet" href="/pagefind/pagefind-ui.css" />}
+{import.meta.env.PROD && <script is:inline src="/pagefind/pagefind-ui.js"></script>}
+{import.meta.env.PROD && (
+  <script is:inline>
+    /** @type {any} */
+    const pagefindGlobal = window;
+    const search = document.querySelector('#search');
+    if (search && pagefindGlobal.PagefindUI) {
+      new pagefindGlobal.PagefindUI({ element: '#search', showSubResults: true });
+    }
+  </script>
+)}

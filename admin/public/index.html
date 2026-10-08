@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="icon" href="/images/branding/k-logo-32.png" type="image/png" sizes="32x32" />
+		<title>KaiLog 管理后台</title>
+		<link rel="stylesheet" href="/admin/styles.css" />
+		<script>
+			(() => {
+				const theme = localStorage.getItem("theme");
+				const dark =
+					theme === "dark" ||
+					(theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+				document.documentElement.classList.toggle("dark", dark);
+				const hue = Number.parseInt(localStorage.getItem("hue") || "225", 10);
+				if (Number.isFinite(hue)) document.documentElement.style.setProperty("--hue", String(hue));
+			})();
+		</script>
+	</head>
+	<body>
+		<div id="app"></div>
+		<script src="/admin/app.js" type="module"></script>
+	</body>
+</html>

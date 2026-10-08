@@ -1,0 +1,43 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { sortLogs } from "../utils/log-utils";
+
+interface Props {
+	logs: CollectionEntry<"logs">[];
+}
+
+const { logs } = Astro.props;
+const sortedLogs = sortLogs(logs);
+const groups = sortedLogs.reduce(
+	(result, log) => {
+		const year = log.data.date.slice(0, 4);
+		const group = result.find((item) => item.year === year);
+		if (group) group.logs.push(log);
+		else result.push({ year, logs: [log] });
+		return result;
+	},
+	[] as { year: string; logs: CollectionEntry<"logs">[] }[],
+);
+---
+
+<div class="log-timeline" aria-label="重要节点">
+	{groups.length > 0 ? groups.map((group) => (
+		<section class="log-year" aria-labelledby={`log-year-${group.year}`}>
+			<div class="log-year-heading">
+				<h2 id={`log-year-${group.year}`}>{group.year}</h2>
+				<span>{group.logs.length} 条记录</span>
+			</div>
+			<ol class="log-year-list">
+				{group.logs.map((log) => (
+					<li class="log-timeline-item">
+						<time datetime={log.data.date}>
+							<span class="log-timeline-marker" aria-hidden="true"></span>
+							{log.data.date}
+						</time>
+						<span class="log-timeline-title">{log.data.title}</span>
+					</li>
+				))}
+			</ol>
+		</section>
+	)) : <p class="home-empty-row">暂无日志。</p>}
+</div>

@@ -1,0 +1,47 @@
+---
+import { homeConfig, profileConfig } from "../../config";
+import { Icon } from "astro-icon/components";
+---
+
+<section class="home-hero-section" aria-labelledby="home-hero-title">
+	<div class="home-container">
+		<div class="home-hero-inner">
+			<div class="home-hero-accent-bar" aria-hidden="true"></div>
+			{profileConfig.avatar && (
+				<img
+					class="home-avatar"
+					src={profileConfig.avatar}
+					alt={profileConfig.name}
+					width="88"
+					height="88"
+				/>
+			)}
+			<p class="home-eyebrow">{homeConfig.eyebrow}</p>
+			<h1
+				id="home-hero-title"
+				class:list={["home-hero-name", { "is-long": homeConfig.title.length > 6 }]}
+			>
+				{homeConfig.title}
+			</h1>
+			{profileConfig.links.length > 0 && (
+				<nav class="home-social-links" aria-label="社交链接">
+					{profileConfig.links.map((link) => (
+						<a
+							href={link.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={link.name}
+							title={link.name}
+							class="home-social-link"
+						>
+							<Icon name={link.icon} aria-hidden="true" />
+						</a>
+					))}
+				</nav>
+			)}
+			{homeConfig.description && (
+				<p class="home-hero-description">{homeConfig.description}</p>
+			)}
+		</div>
+	</div>
+</section>

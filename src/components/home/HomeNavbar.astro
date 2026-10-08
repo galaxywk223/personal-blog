@@ -1,0 +1,87 @@
+---
+import { Icon } from "astro-icon/components";
+import { navBarConfig, siteConfig } from "../../config";
+import LightDarkSwitch from "../LightDarkSwitch.svelte";
+import type { NavBarLink } from "../../types/config";
+import { pathsEqual, url } from "../../utils/url-utils";
+import { LinkPresets } from "../../constants/link-presets";
+
+const links: NavBarLink[] = navBarConfig.links.map((item) => {
+	if (typeof item === "number") return LinkPresets[item];
+	return item;
+});
+
+const currentPath = Astro.url.pathname.replace(/\/+$/, "") || "/";
+const isActive = (link: NavBarLink) => {
+	if (link.external) return false;
+	const targetPath = url(link.url).replace(/\/+$/, "") || "/";
+	return pathsEqual(link.url, "/")
+		? pathsEqual(Astro.url.pathname, url("/"))
+		: currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
+};
+---
+
+<header class="home-navbar">
+	<div class="home-container home-navbar-inner">
+		<a class="home-brand" href={url("/")} aria-label={siteConfig.navbarTitle}>
+			<img src={url("/images/branding/k-logo.png")} alt="" aria-hidden="true" class="home-brand-logo" width="32" height="32" />
+			<span class="home-brand-name">{siteConfig.navbarTitle}</span>
+		</a>
+		<nav class="home-nav-links" aria-label="主导航">
+			{links.map((link) => (
+				<a
+					href={link.external ? link.url : url(link.url)}
+					target={link.external ? "_blank" : undefined}
+					class:list={{ "is-active": isActive(link) }}
+					aria-current={isActive(link) ? "page" : undefined}
+				>
+					{link.name}
+				</a>
+			))}
+		</nav>
+		<div class="home-nav-actions">
+			<a class="home-icon-button" href={url("/search/")} aria-label="搜索" title="搜索">
+				<Icon name="material-symbols:search-rounded" class="home-action-icon" />
+			</a>
+			<LightDarkSwitch client:only="svelte" />
+			<details class="home-mobile-menu">
+				<summary aria-label="打开菜单" title="菜单"><Icon name="material-symbols:menu-rounded" /></summary>
+				<div class="home-mobile-menu-panel">
+					{links.map((link) => (
+						<a
+							href={link.external ? link.url : url(link.url)}
+							target={link.external ? "_blank" : undefined}
+							class:list={{ "is-active": isActive(link) }}
+							aria-current={isActive(link) ? "page" : undefined}
+						>
+							{link.name}
+						</a>
+					))}
+				</div>
+			</details>
+		</div>
+	</div>
+</header>
+
+<script>
+function updateNavigation() {
+	const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+	for (const link of document.querySelectorAll<HTMLAnchorElement>(
+		".home-nav-links a, .home-mobile-menu-panel a",
+	)) {
+		const target = new URL(link.href);
+		const targetPath = target.pathname.replace(/\/+$/, "") || "/";
+		const active = target.origin === window.location.origin &&
+			(pathname === targetPath || (targetPath !== "/" && pathname.startsWith(`${targetPath}/`)));
+		link.classList.toggle("is-active", active);
+		if (active) link.setAttribute("aria-current", "page");
+		else link.removeAttribute("aria-current");
+	}
+	for (const menu of document.querySelectorAll<HTMLDetailsElement>(".home-mobile-menu")) {
+		menu.open = false;
+	}
+}
+
+updateNavigation();
+document.addEventListener("astro:page-load", updateNavigation);
+</script>

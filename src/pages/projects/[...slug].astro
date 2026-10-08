@@ -1,0 +1,27 @@
+---
+import { getCollection, render } from "astro:content";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import Markdown from "@components/misc/Markdown.astro";
+import { projectStatusLabel } from "@constants/project-status";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects");
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+---
+
+<MainGridLayout title={project.data.title} eyebrow={`${project.data.category} · ${projectStatusLabel(project.data.status)}`} description={project.data.description}>
+  <article class="home-article-shell">
+      <a class="project-detail-back" href="/projects/" aria-label="返回项目列表">← 返回项目</a>
+      <div class="mt-6 markdown-content">
+        <Markdown class=""><Content /></Markdown>
+      </div>
+      <div class="mt-8 flex gap-4 text-sm font-bold text-[var(--primary)]">
+        {project.data.repository && <a href={project.data.repository} target="_blank" rel="noreferrer">代码仓库 →</a>}
+        {project.data.url && <a href={project.data.url} target="_blank" rel="noreferrer">项目主页 →</a>}
+      </div>
+  </article>
+</MainGridLayout>

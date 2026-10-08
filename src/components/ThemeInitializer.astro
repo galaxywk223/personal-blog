@@ -1,0 +1,31 @@
+---
+import { AUTO_MODE, DARK_MODE, DEFAULT_THEME, LIGHT_MODE } from "../constants/constants";
+import { expressiveCodeConfig, siteConfig } from "../config";
+
+interface Props {
+	configHue?: number;
+}
+
+const { configHue = siteConfig.themeColor.hue } = Astro.props;
+---
+
+<script
+	is:inline
+	define:vars={{ AUTO_MODE, DARK_MODE, DEFAULT_THEME, LIGHT_MODE, configHue, expressiveCodeTheme: expressiveCodeConfig.theme }}
+>
+	const storedTheme = localStorage.getItem("theme");
+	const theme = [LIGHT_MODE, DARK_MODE, AUTO_MODE].includes(storedTheme)
+		? storedTheme
+		: DEFAULT_THEME;
+	const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+	document.documentElement.classList.toggle(
+		"dark",
+		theme === DARK_MODE || (theme === AUTO_MODE && prefersDark),
+	);
+	document.documentElement.setAttribute("data-theme", expressiveCodeTheme);
+
+	const storedHue = Number.parseInt(localStorage.getItem("hue") || "", 10);
+	const hue = Number.isFinite(storedHue) ? storedHue : configHue;
+	document.documentElement.style.setProperty("--hue", String(hue));
+</script>

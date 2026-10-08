@@ -1,0 +1,16 @@
+---
+import LogTimeline from "@components/LogTimeline.astro";
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getCollection } from "astro:content";
+import { sortLogs } from "../utils/log-utils";
+
+const logs = sortLogs(await getCollection("logs"));
+---
+
+<MainGridLayout title={i18n(I18nKey.archive)} eyebrow="时间轨迹" description="记录一些重要节点，以及那时正在做的事。">
+    <section class="home-page-section">
+        <LogTimeline logs={logs} />
+    </section>
+</MainGridLayout>

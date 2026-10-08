@@ -1,0 +1,82 @@
+services:
+  site:
+    build:
+      context: .
+      args:
+        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://example.com}
+        PUBLIC_WALINE_SERVER_URL: ${PUBLIC_WALINE_SERVER_URL:-https://example.com/api/waline}
+    restart: unless-stopped
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - site_dist:/srv:ro
+    depends_on:
+      - waline
+
+  admin:
+    build:
+      context: .
+      target: admin
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      BLOG_ROOT: /app
+      ADMIN_PORT: 4322
+      DATABASE_URL: postgresql://${POSTGRES_USER:-waline}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-waline}
+    command: ["sh", "-c", "node scripts/db-migrate.mjs && npm run build && npm run admin"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:4322:4322"
+    volumes:
+      - .:/app
+      - admin_node_modules:/app/node_modules
+      - site_dist:/app/dist
+
+  waline:
+    image: lizheming/waline:latest
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      PG_DB: ${POSTGRES_DB:-waline}
+      PG_USER: ${POSTGRES_USER:-waline}
+      PG_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      PG_HOST: postgres
+      PG_PORT: 5432
+      SITE_NAME: ${SITE_NAME:-KaiLog}
+      SITE_URL: ${PUBLIC_SITE_URL:-https://example.com}
+      SECURE_DOMAINS: ${SITE_DOMAIN:-localhost}
+      JWT_TOKEN: ${WALINE_JWT_TOKEN:?WALINE_JWT_TOKEN is required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-waline}
+      POSTGRES_USER: ${POSTGRES_USER:-waline}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/waline.pgsql:/docker-entrypoint-initdb.d/01-waline.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  admin_node_modules:
+  site_dist:

@@ -1,0 +1,7 @@
+{
+  "site": { "title": "KaiLog", "navbarTitle": "KaiLog", "subtitle": "示例技术与项目记录" },
+  "profile": { "avatar": "", "name": "示例作者", "bio": "用于公开仓库演示的示例资料。", "links": [] },
+  "home": { "eyebrow": "你好，我是", "title": "示例作者", "description": "这是一个不包含个人数据的 KaiLog 示例站点。", "heroImage": "", "quote": "把想法做出来，把过程留下来。" },
+  "footer": { "copyrightName": "KaiLog" },
+  "projects": { "categories": ["示例"] }
+}

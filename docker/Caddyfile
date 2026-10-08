@@ -1,0 +1,21 @@
+{$SITE_DOMAIN:localhost} {
+  encode gzip zstd
+
+  handle_path /api/waline/* {
+    reverse_proxy waline:8360
+  }
+
+  handle /api/admin/* {
+    reverse_proxy admin:4322
+  }
+
+  handle /admin* {
+    reverse_proxy admin:4322
+  }
+
+  handle {
+    root * /srv
+    try_files {path} {path}/ /index.html
+    file_server
+  }
+}

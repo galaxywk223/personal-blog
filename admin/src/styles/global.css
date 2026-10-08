@@ -1,0 +1,44 @@
+/* Global base styles for the admin Svelte app */
+@import "./tokens.css";
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	min-height: 100%;
+}
+
+body {
+	background: var(--color-surface-base);
+	color: var(--color-text);
+	font:
+		15px / 1.6 "IBM Plex Sans SC",
+		ui-sans-serif,
+		system-ui,
+		sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+	font: inherit;
+}
+
+button {
+	cursor: pointer;
+}
+
+a {
+	color: inherit;
+	-webkit-tap-highlight-color: transparent;
+}
+
+button {
+	-webkit-tap-highlight-color: transparent;
+}

@@ -1,0 +1,6 @@
+# Generated build output
+admin/public/**
+admin/package-lock.json
+dist/**
+.astro/**
+.dist-stage-*/**

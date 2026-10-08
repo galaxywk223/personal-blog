@@ -1,0 +1,28 @@
+---
+import { getCollection } from "astro:content";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import ProjectGallery from "@components/ProjectGallery.svelte";
+import { projectStatusLabel } from "@constants/project-status";
+import { projectCategoriesConfig } from "../../config";
+
+const projects = (await getCollection("projects"))
+  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf())
+  .map((project) => ({
+    id: project.id,
+    title: project.data.title,
+    description: project.data.description,
+    image: project.data.image,
+    category: project.data.category,
+    status: project.data.status,
+    statusLabel: projectStatusLabel(project.data.status),
+    url: project.data.url,
+    repository: project.data.repository,
+    published: project.data.published.toISOString(),
+  }));
+---
+
+<MainGridLayout title="项目" eyebrow="构建与实践" description="一些做过、正在做，以及持续维护的东西。">
+  <section class="home-page-section">
+    <ProjectGallery projects={projects} categories={projectCategoriesConfig.categories} client:load />
+  </section>
+</MainGridLayout>

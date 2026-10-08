@@ -1,0 +1,65 @@
+/* ── Admin design tokens ───────────────────────────────────────────────
+ * Same naming convention as src/styles/tokens.css so both ends look
+ * visually unified. Standalone file so admin/server.mjs serves it
+ * with no dependency on the blog's build.
+ */
+
+:root {
+	color-scheme: light;
+	--hue: 225;
+
+	--radius-sm: 6px;
+	--radius-md: 12px;
+	--radius-lg: 1rem;
+
+	/* Raw OKLCH ramp (light) */
+	--page-bg: oklch(0.95 0.01 var(--hue));
+	--card-bg: white;
+	--soft-bg: oklch(0.95 0.025 var(--hue));
+	--deep-text: oklch(0.25 0.02 var(--hue));
+	--primary: oklch(0.7 0.14 var(--hue));
+	--line: oklch(0 0 0 / 0.08);
+
+	/* Semantic tokens */
+	--color-surface-base: var(--page-bg);
+	--color-surface-raised: var(--card-bg);
+	--color-surface-overlay: white;
+	--color-border: var(--line);
+	--color-border-muted: oklch(0 0 0 / 0.06);
+	--color-text: var(--deep-text);
+	--color-text-muted: color-mix(in oklch, var(--deep-text) 58%, transparent);
+	--color-text-heading: var(--deep-text);
+	--color-accent: var(--primary);
+	--color-accent-muted: var(--soft-bg);
+	--color-accent-text: oklch(0.98 0.005 var(--hue));
+
+	--color-success: oklch(0.68 0.15 155);
+	--color-warning: oklch(0.72 0.16 65);
+	--color-danger: oklch(0.6 0.2 25);
+	--color-success-tint: oklch(0.95 0.03 155);
+	--color-warning-tint: oklch(0.96 0.04 65);
+	--color-danger-tint: oklch(0.95 0.04 25);
+
+	/* Sidebar */
+	--sidebar-width: 220px;
+}
+
+:root.dark {
+	color-scheme: dark;
+	--page-bg: oklch(0.16 0.014 var(--hue));
+	--card-bg: oklch(0.23 0.015 var(--hue));
+	--soft-bg: oklch(0.33 0.035 var(--hue));
+	--deep-text: oklch(0.92 0.02 var(--hue));
+	--primary: oklch(0.75 0.14 var(--hue));
+	--line: oklch(1 0 0 / 0.09);
+
+	--color-surface-overlay: oklch(0.2 0.015 var(--hue));
+	--color-accent-text: oklch(0.12 0.01 var(--hue));
+
+	--color-success: oklch(0.73 0.14 155);
+	--color-warning: oklch(0.77 0.15 65);
+	--color-danger: oklch(0.68 0.18 25);
+	--color-success-tint: oklch(0.22 0.04 155);
+	--color-warning-tint: oklch(0.22 0.04 65);
+	--color-danger-tint: oklch(0.22 0.04 25);
+}
