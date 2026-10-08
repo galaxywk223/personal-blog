@@ -42,3 +42,83 @@ a {
 button {
 	-webkit-tap-highlight-color: transparent;
 }
+.accounts-view {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.accounts-view h1,
+.accounts-view h2 {
+	margin: 0;
+	color: var(--color-text-heading);
+}
+.accounts-view h1 {
+	font-size: 1.5rem;
+}
+.accounts-view h2 {
+	font-size: 1.1rem;
+}
+.accounts-view .muted {
+	color: var(--color-text-muted);
+	margin: 0;
+}
+.accounts-view .error {
+	color: var(--color-danger);
+	background: var(--color-danger-tint);
+	padding: 0.75rem;
+	border-radius: var(--radius-sm);
+}
+.account-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	max-width: 32rem;
+	padding: 1.25rem;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-surface-raised);
+}
+.account-form label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.account-form input {
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-sm);
+	background: var(--color-surface-base);
+	color: var(--color-text);
+}
+.accounts-view button {
+	padding: 0.5rem 0.75rem;
+	margin-right: 0.5rem;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-sm);
+	background: var(--color-accent-muted);
+	color: var(--color-text);
+}
+.accounts-view button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.account-table-wrap {
+	overflow-x: auto;
+}
+.accounts-view table {
+	width: 100%;
+	border-collapse: collapse;
+	background: var(--color-surface-raised);
+}
+.accounts-view th,
+.accounts-view td {
+	text-align: left;
+	padding: 0.75rem;
+	border-bottom: 1px solid var(--color-border);
+}
+.sidebar-user {
+	padding: 0 0.75rem;
+	font-size: 0.875rem;
+	color: var(--color-text-muted);
+	overflow-wrap: anywhere;
+}

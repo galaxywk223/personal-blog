@@ -7,10 +7,13 @@
   import CategoriesView from "./views/CategoriesView.svelte";
   import SettingsView from "./views/SettingsView.svelte";
   import LoginView from "./views/LoginView.svelte";
+  import UsersView from "./views/UsersView.svelte";
+  import PasswordView from "./views/PasswordView.svelte";
 
-  type View = "posts" | "projects" | "logs" | "post-editor" | "project-editor" | "log-editor" | "categories" | "settings";
+  type View = "posts" | "projects" | "logs" | "post-editor" | "project-editor" | "log-editor" | "categories" | "settings" | "users" | "password";
 
   let loggedIn = $state(false);
+  let currentUser = $state<{id: string; username: string} | null>(null);
   let view = $state<View>("posts");
   let editingItem = $state<Record<string, unknown> | null>(null);
 
@@ -23,6 +26,8 @@
 
   async function onLogin(csrf: string) {
     setCsrf(csrf);
+    const me = await api<{user: {id: string; username: string}}>("/api/admin/me");
+    currentUser = me.user;
     await loadAll();
     loggedIn = true;
   }
@@ -50,9 +55,10 @@
 
   // Check session on mount
   $effect(() => {
-    api<{ csrf?: string }>("/api/admin/me")
+    api<{ csrf?: string; user: {id: string; username: string} }>("/api/admin/me")
       .then((r) => {
         if (r.csrf) setCsrf(r.csrf);
+        currentUser = r.user;
         return loadAll();
       })
       .then(() => { loggedIn = true; })
@@ -64,7 +70,7 @@
   <LoginView {onLogin} />
 {:else}
   <div class="admin-layout">
-    <Sidebar {view} {navigate} />
+    <Sidebar {view} {navigate} username={currentUser?.username ?? ""} />
     <main class="admin-main">
       {#if view === "posts"}
         <PostsView kind="posts" items={posts} {navigate} reload={loadAll} />
@@ -82,6 +88,10 @@
         <CategoriesView {categories} {categoryUsage} reload={loadAll} />
       {:else if view === "settings"}
         <SettingsView {settings} reload={loadAll} />
+      {:else if view === "users"}
+        <UsersView currentId={currentUser?.id ?? ""} />
+      {:else if view === "password"}
+        <PasswordView onChanged={() => { setCsrf(""); currentUser = null; loggedIn = false; view = "posts"; }} />
       {/if}
     </main>
   </div>

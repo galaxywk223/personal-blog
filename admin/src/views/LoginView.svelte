@@ -3,6 +3,7 @@
 
   const { onLogin } = $props<{ onLogin: (csrf: string) => Promise<void> }>();
 
+  let username = $state("");
   let password = $state("");
   let error = $state("");
   let submitting = $state(false);
@@ -14,7 +15,7 @@
     try {
       const result = await api<{ csrf: string }>("/api/admin/login", {
         method: "POST",
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       });
       setCsrf(result.csrf);
       await onLogin(result.csrf);
@@ -55,6 +56,10 @@
 
     <form onsubmit={submit}>
       <label class="field">
+        <span>管理员账号</span>
+        <input name="username" autocomplete="username" bind:value={username} required minlength="3" maxlength="32" />
+      </label>
+      <label class="field">
         <span>管理员密码</span>
         <input
           name="password"
@@ -62,7 +67,6 @@
           autocomplete="current-password"
           bind:value={password}
           required
-          autofocus
         />
       </label>
       <button class="button primary" type="submit" disabled={submitting}>

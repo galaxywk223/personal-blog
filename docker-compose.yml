@@ -29,7 +29,12 @@ services:
       BLOG_ROOT: /app
       ADMIN_PORT: 4322
       DATABASE_URL: postgresql://${POSTGRES_USER:-waline}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:-waline}
-    command: ["sh", "-c", "node scripts/db-migrate.mjs && npm run build && npm run admin"]
+    command:
+      [
+        "sh",
+        "-c",
+        "node scripts/db-migrate.mjs && node scripts/admin-users.mjs && npm run build && npm run admin",
+      ]
     depends_on:
       postgres:
         condition: service_healthy

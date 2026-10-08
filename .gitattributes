@@ -1,0 +1,2 @@
+# Bundled JavaScript may contain intentional whitespace inside template literals.
+admin/public/app.js -whitespace

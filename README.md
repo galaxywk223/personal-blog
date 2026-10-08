@@ -38,3 +38,26 @@ npm run format:check
 ## 许可
 
 代码使用 MIT License。生产内容和个人媒体不属于公开仓库授权范围。
+
+## 管理员账号
+
+管理端使用 PostgreSQL 多管理员账号，所有管理员权限相同，不开放注册。首次配置 `.env` 的 `ADMIN_INITIAL_USERNAME` 和 `ADMIN_PASSWORD_HASH` 后执行：
+
+```powershell
+npm run admin:users
+```
+
+初始化仅在账号表为空时创建首个账号，重复执行不会覆盖密码。已有账号的登录认证来自数据库，环境变量不作为登录后备凭据。账号名为 3–32 位英文字母、数字、点、下划线或连字符，统一小写。新增和重置密码至少 12 个字符。
+
+账号管理支持创建、启用、停用和重置其他管理员密码；修改自己的密码需要原密码。当前账号和最后一个有效管理员不能被停用。停用和密码变更立即使既有 Session 失效，账号操作不触发博客构建。
+
+账号和密码哈希不进入内容导出、静态快照或公开仓库。完整数据库备份应私密保存。
+
+## 认证集成测试
+
+`AUTH_TEST_DATABASE_URL` 必须指向没有 `blog` 表的隔离 PostgreSQL 数据库。测试只创建测试账号，不接触正式配置。
+
+```powershell
+$env:AUTH_TEST_DATABASE_URL = 'postgresql://test-user:test-password@127.0.0.1:5432/kailog_auth_test'
+node tests/admin-auth.mjs
+```

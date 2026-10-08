@@ -61,9 +61,10 @@ if (-not (Test-Path $astroEntry)) { Fail '未找到 Astro Node.js 入口。请�
 $envPath = Join-Path $ProjectRoot '.env'
 if (-not (Test-Path $envPath)) { Fail "缺少 .env 文件。请复制 .env.example 为 .env，并填写管理员配置。" }
 $envValues = Read-DotEnv $envPath
-if (-not ($envValues['ADMIN_PASSWORD_HASH'] -or $envValues['ADMIN_PASSWORD'])) { Fail '未配置管理员认证。请在 .env 中设置 ADMIN_PASSWORD_HASH（推荐）或 ADMIN_PASSWORD。' }
 if (-not $envValues['ADMIN_SESSION_SECRET']) { Fail '未配置 ADMIN_SESSION_SECRET。请在 .env 中设置随机长字符串。' }
 if (-not $envValues['DATABASE_URL']) { Fail '未配置 DATABASE_URL。请在 .env 中设置博客 PostgreSQL 连接字符串。' }
+& $node.Source "--env-file=$envPath" (Join-Path $ProjectRoot 'scripts\admin-users.mjs')
+if ($LASTEXITCODE -ne 0) { Fail '管理员账号初始化失败。首次启动需配置 ADMIN_INITIAL_USERNAME 和 ADMIN_PASSWORD_HASH。' }
 $adminPort = 4322
 if ($envValues['ADMIN_PORT']) { if (-not [int]::TryParse($envValues['ADMIN_PORT'], [ref]$adminPort) -or $adminPort -lt 1 -or $adminPort -gt 65535) { Fail "ADMIN_PORT 配置无效：$($envValues['ADMIN_PORT'])" } }
 

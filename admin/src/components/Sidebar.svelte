@@ -4,9 +4,11 @@
   const {
     view,
     navigate,
+    username,
   }: {
     view: string;
     navigate: (v: string) => void;
+    username: string;
   } = $props();
 
   const navItems = [
@@ -15,6 +17,8 @@
     { id: "logs", label: "日志", icon: "◎" },
     { id: "categories", label: "项目分类", icon: "⊞" },
     { id: "settings", label: "站点设置", icon: "⚙" },
+    { id: "users", label: "账号管理", icon: "♙" },
+    { id: "password", label: "修改密码", icon: "⌘" },
   ];
 
   const activeSection = $derived(
@@ -76,6 +80,7 @@
   </nav>
 
   <div class="sidebar-footer">
+    <span class="sidebar-user">{username}</span>
     <div class="sidebar-bottom">
       <button type="button" class="sidebar-meta-btn" onclick={cycleTheme}>
         {themeLabels[currentTheme]}

@@ -16,7 +16,8 @@
 		"admin:build": "cd admin && npm install && npm run build",
 		"db:migrate": "node scripts/db-migrate.mjs",
 		"db:sync": "node scripts/content-sync.mjs",
-		"db:export": "node scripts/db-export.mjs"
+		"db:export": "node scripts/db-export.mjs",
+		"admin:users": "node --env-file=.env scripts/admin-users.mjs"
 	},
 	"dependencies": {
 		"@astrojs/markdown-remark": "^7.3.1",

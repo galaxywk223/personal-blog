@@ -6,12 +6,14 @@ import { join, normalize, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
+import { loginAttempt } from "../lib/login-limit.mjs";
 import {
 	closePool,
 	getPool,
 	hasDatabase,
 	readDatabaseSnapshot,
 	readLegacySnapshot,
+	ensureSchema,
 	serializeFrontmatter,
 } from "../lib/content-db.mjs";
 
@@ -27,6 +29,7 @@ const loginAttempts = new Map();
 const builds = new Map();
 let buildPromise = null;
 const projectStatuses = ["planned", "in-progress", "completed", "archived"];
+const usernamePattern = /^[a-z0-9_.-]{3,32}$/;
 const send = (res, status, payload, headers = {}) => {
 	const body = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
 	res.writeHead(status, { "content-type": "application/json; charset=utf-8", ...headers });
@@ -39,19 +42,24 @@ function safeSlug(value) {
 function passwordHash(password, salt = randomBytes(16).toString("hex")) {
 	return `scrypt$${salt}$${scryptSync(password, salt, 64).toString("hex")}`;
 }
-function verifyPassword(password) {
-	const configured = process.env.ADMIN_PASSWORD_HASH;
-	if (!configured && process.env.NODE_ENV !== "production" && process.env.ADMIN_PASSWORD) {
-		const a = Buffer.from(password);
-		const b = Buffer.from(process.env.ADMIN_PASSWORD);
-		return a.length === b.length && timingSafeEqual(a, b);
-	}
-	if (!configured) return false;
+function normalizeUsername(value) {
+	return String(value || "")
+		.trim()
+		.toLowerCase();
+}
+function verifyPassword(password, configured) {
+	if (typeof configured !== "string" || !/^scrypt\$[a-f0-9]{32}\$[a-f0-9]{128}$/.test(configured))
+		return false;
 	const [, salt, digest] = configured.split("$");
 	if (!salt || !digest) return false;
 	const actual = scryptSync(password, salt, 64);
 	const expected = Buffer.from(digest, "hex");
 	return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
+function validatePassword(password, allowExisting = false) {
+	return (
+		typeof password === "string" && (allowExisting ? password.length > 0 : password.length >= 12)
+	);
 }
 function cookieValue(req, name) {
 	for (const cookie of String(req.headers.cookie || "").split(";")) {
@@ -60,17 +68,29 @@ function cookieValue(req, name) {
 	}
 	return "";
 }
-function sessionFrom(req) {
+async function sessionFrom(req) {
 	const token = cookieValue(req, "blog_admin_session");
 	const session = sessions.get(token);
 	if (!session || session.expires < Date.now()) {
 		if (token) sessions.delete(token);
 		return null;
 	}
+	if (hasDatabase()) {
+		const result = await getPool().query(
+			"SELECT id, username, enabled, credential_version FROM blog.admin_users WHERE id = $1",
+			[session.userId],
+		);
+		const user = result.rows[0];
+		if (!user || !user.enabled || user.credential_version !== session.credentialVersion) {
+			sessions.delete(token);
+			return null;
+		}
+		return { token, ...session, user };
+	}
 	return { token, ...session };
 }
-function requireSession(req, res) {
-	const session = sessionFrom(req);
+async function requireSession(req, res) {
+	const session = await sessionFrom(req);
 	if (!session) {
 		send(res, 401, { error: "未登录" });
 		return null;
@@ -87,9 +107,26 @@ function requireSession(req, res) {
 }
 async function requestJson(req) {
 	const chunks = [];
-	for await (const chunk of req) chunks.push(chunk);
+	let size = 0;
+	for await (const chunk of req) {
+		size += chunk.length;
+		if (size > 2 * 1024 * 1024) {
+			const error = new Error("请求体过大");
+			error.status = 413;
+			throw error;
+		}
+		chunks.push(chunk);
+	}
 	const body = Buffer.concat(chunks);
-	return body.length ? JSON.parse(body.toString("utf8")) : {};
+	try {
+		const input = body.length ? JSON.parse(body.toString("utf8")) : {};
+		if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error();
+		return input;
+	} catch {
+		const error = new Error("请求格式无效");
+		error.status = 400;
+		throw error;
+	}
 }
 function requireDatabase(res) {
 	if (hasDatabase()) return true;
@@ -262,36 +299,167 @@ async function changedResponse(kind, slug, reason) {
 	};
 }
 
+function invalidateUserSessions(userId) {
+	for (const [token, session] of sessions)
+		if (String(session.userId) === String(userId)) sessions.delete(token);
+}
+
+async function handleUsers(req, res, url, session) {
+	if (url.pathname === "/api/admin/users" && req.method === "GET") {
+		const result = await getPool().query(
+			"SELECT id, username, enabled, created_at, updated_at FROM blog.admin_users ORDER BY id",
+		);
+		return send(res, 200, result.rows);
+	}
+	if (url.pathname === "/api/admin/users" && req.method === "POST") {
+		const { username: rawUsername, password } = await requestJson(req);
+		const username = normalizeUsername(rawUsername);
+		if (!usernamePattern.test(username) || !validatePassword(password))
+			return send(res, 400, {
+				error: "账号为 3–32 位英文字母、数字、点、下划线或连字符；密码至少 12 个字符",
+			});
+		try {
+			const result = await getPool().query(
+				"INSERT INTO blog.admin_users (username, password_hash) VALUES ($1, $2) RETURNING id, username, enabled",
+				[username, passwordHash(password)],
+			);
+			return send(res, 201, result.rows[0]);
+		} catch (error) {
+			if (error.code === "23505") return send(res, 409, { error: "账号已存在" });
+			throw error;
+		}
+	}
+	if (url.pathname === "/api/admin/password" && req.method === "PUT") {
+		const { oldPassword, password } = await requestJson(req);
+		if (!validatePassword(password) || !validatePassword(oldPassword, true))
+			return send(res, 400, { error: "请输入原密码，新密码至少 12 个字符" });
+		const client = await getPool().connect();
+		try {
+			await client.query("BEGIN");
+			const { rows } = await client.query(
+				"SELECT password_hash FROM blog.admin_users WHERE id = $1 FOR UPDATE",
+				[session.user.id],
+			);
+			if (!verifyPassword(oldPassword, rows[0].password_hash)) {
+				await client.query("ROLLBACK");
+				return send(res, 400, { error: "原密码错误" });
+			}
+			await client.query(
+				"UPDATE blog.admin_users SET password_hash = $1, credential_version = credential_version + 1, updated_at = now() WHERE id = $2",
+				[passwordHash(password), session.user.id],
+			);
+			await client.query("COMMIT");
+		} catch (error) {
+			await client.query("ROLLBACK");
+			throw error;
+		} finally {
+			client.release();
+		}
+		invalidateUserSessions(session.user.id);
+		return send(res, 200, { ok: true });
+	}
+	const match = url.pathname.match(/^\/api\/admin\/users\/(\d+)\/(status|password)$/);
+	if (match && req.method === "PUT") {
+		const id = match[1];
+		const action = match[2];
+		const input = await requestJson(req);
+		if (action === "password") {
+			if (String(session.user.id) === id)
+				return send(res, 400, { error: "请通过修改密码入口更改自己的密码" });
+			if (!validatePassword(input.password))
+				return send(res, 400, { error: "新密码至少 12 个字符" });
+			const result = await getPool().query(
+				"UPDATE blog.admin_users SET password_hash = $1, credential_version = credential_version + 1, updated_at = now() WHERE id = $2 RETURNING id",
+				[passwordHash(input.password), id],
+			);
+			if (!result.rowCount) return send(res, 404, { error: "账号不存在" });
+		} else {
+			if (typeof input.enabled !== "boolean") return send(res, 400, { error: "启用状态无效" });
+			if (!input.enabled && String(session.user.id) === id)
+				return send(res, 400, { error: "不能停用当前账号" });
+			const client = await getPool().connect();
+			try {
+				await client.query("BEGIN");
+				await client.query("LOCK TABLE blog.admin_users IN EXCLUSIVE MODE");
+				const { rows } = await client.query(
+					"SELECT id, enabled FROM blog.admin_users WHERE id = $1",
+					[id],
+				);
+				if (!rows.length) {
+					await client.query("ROLLBACK");
+					return send(res, 404, { error: "账号不存在" });
+				}
+				const count = await client.query(
+					"SELECT count(*)::int AS count FROM blog.admin_users WHERE enabled",
+				);
+				if (!input.enabled && rows[0].enabled && count.rows[0].count <= 1) {
+					await client.query("ROLLBACK");
+					return send(res, 400, { error: "不能停用最后一个有效管理员" });
+				}
+				await client.query(
+					"UPDATE blog.admin_users SET enabled = $1, credential_version = credential_version + 1, updated_at = now() WHERE id = $2",
+					[input.enabled, id],
+				);
+				await client.query("COMMIT");
+			} catch (error) {
+				await client.query("ROLLBACK");
+				throw error;
+			} finally {
+				client.release();
+			}
+		}
+		invalidateUserSessions(id);
+		return send(res, 200, { ok: true });
+	}
+	return send(res, 404, { error: "接口不存在" });
+}
+
 async function handleApi(req, res, url) {
 	if (url.pathname === "/api/admin/login" && req.method === "POST") {
 		const ip = req.socket.remoteAddress || "unknown";
-		const attempt = loginAttempts.get(ip) || { count: 0, at: Date.now() };
-		if (Date.now() - attempt.at > 60_000) attempt.count = 0;
+		const attempt = loginAttempt(loginAttempts, ip);
 		if (attempt.count >= 5) return send(res, 429, { error: "登录尝试过于频繁" });
-		const { password } = await requestJson(req);
-		if (typeof password !== "string" || !verifyPassword(password)) {
+		const { username: rawUsername, password } = await requestJson(req);
+		const username = normalizeUsername(rawUsername);
+		if (!hasDatabase()) return send(res, 503, { error: "管理员登录需要数据库" });
+		const result = await getPool().query(
+			"SELECT id, username, password_hash, enabled, credential_version FROM blog.admin_users WHERE username = $1",
+			[username],
+		);
+		const user = result.rows[0];
+		if (
+			!usernamePattern.test(username) ||
+			!validatePassword(password, true) ||
+			!user ||
+			!user.enabled ||
+			!verifyPassword(password, user.password_hash)
+		) {
 			attempt.count += 1;
 			loginAttempts.set(ip, attempt);
-			return send(res, 401, { error: "密码错误" });
+			return send(res, 401, { error: "账号或密码错误" });
 		}
-		if (!sessionSecret && process.env.NODE_ENV === "production")
-			return send(res, 500, { error: "ADMIN_SESSION_SECRET 未配置" });
+		loginAttempts.delete(ip);
+		if (!sessionSecret) return send(res, 500, { error: "ADMIN_SESSION_SECRET 未配置" });
 		const token = randomBytes(32).toString("hex");
-		const csrf = createHmac("sha256", sessionSecret || "local-development-session-secret")
-			.update(token)
-			.digest("hex");
-		sessions.set(token, { csrf, expires: Date.now() + 8 * 60 * 60 * 1000 });
+		const csrf = createHmac("sha256", sessionSecret).update(token).digest("hex");
+		sessions.set(token, {
+			csrf,
+			expires: Date.now() + 8 * 60 * 60 * 1000,
+			userId: user.id,
+			credentialVersion: user.credential_version,
+		});
 		return send(
 			res,
 			200,
-			{ csrf },
+			{ csrf, user: { id: user.id, username: user.username } },
 			{
 				"set-cookie": `blog_admin_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800${process.env.NODE_ENV === "production" ? "; Secure" : ""}`,
 			},
 		);
 	}
 	if (url.pathname === "/api/admin/session" && req.method === "DELETE") {
-		const session = sessionFrom(req);
+		const session = await requireSession(req, res);
+		if (!session) return;
 		if (session) sessions.delete(session.token);
 		return send(
 			res,
@@ -300,11 +468,17 @@ async function handleApi(req, res, url) {
 			{ "set-cookie": "blog_admin_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0" },
 		);
 	}
-	const session = requireSession(req, res);
+	const session = await requireSession(req, res);
 	if (!session) return;
 	if (!hasDatabase() && !["GET", "HEAD"].includes(req.method)) return requireDatabase(res);
+	if (url.pathname.startsWith("/api/admin/users") || url.pathname === "/api/admin/password")
+		return handleUsers(req, res, url, session);
 	if (url.pathname === "/api/admin/me" && req.method === "GET")
-		return send(res, 200, { ok: true, csrf: session.csrf });
+		return send(res, 200, {
+			ok: true,
+			csrf: session.csrf,
+			user: { id: session.user.id, username: session.user.username },
+		});
 	if (url.pathname.startsWith("/api/admin/builds/") && req.method === "GET") {
 		const build = builds.get(url.pathname.split("/").pop());
 		return build ? send(res, 200, build) : send(res, 404, { error: "构建任务不存在" });
@@ -501,9 +675,10 @@ const server = createServer(async (req, res) => {
 		else send(res, 404, { error: "Not found" });
 	} catch (error) {
 		console.error(error);
-		send(res, 500, { error: error.message || "服务器错误" });
+		send(res, error.status || 500, { error: error.message || "服务器错误" });
 	}
 });
+if (hasDatabase()) await ensureSchema();
 server.listen(port, "0.0.0.0", () =>
 	console.log(
 		`KaiLog admin listening on http://127.0.0.1:${port}/admin/ (${hasDatabase() ? "database" : "legacy bootstrap"})`,
